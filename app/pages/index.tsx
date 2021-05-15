@@ -1,8 +1,9 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import { connectToDatabase } from '../util/mongodb'
 import styles from '../styles/Home.module.css'
 
-export default function Home() {
+export default function Home({ isConnected, users }) {
   return (
     <div className={styles.container}>
       <Head>
@@ -20,6 +21,18 @@ export default function Home() {
           Get started by editing{' '}
           <code className={styles.code}>pages/index.js</code>
         </p>
+
+        {isConnected ? (
+          <p className={styles.code}>You are connected to MongoDB</p>
+        ) : (
+          <p className={styles.code}>
+            You are NOT connected to MongoDB. Check the <code>README.md</code>{' '}
+            for instructions.
+          </p>
+        )}
+
+        <p className={styles.code}>Users</p>
+        {users.map(user => (<div key={user._id}>{user.name}</div>))}
 
         <div className={styles.grid}>
           <a href="https://nextjs.org/docs" className={styles.card}>
@@ -66,4 +79,15 @@ export default function Home() {
       </footer>
     </div>
   )
+}
+
+export async function getServerSideProps() {
+  const { client } = await connectToDatabase()
+  const isConnected = await client.isConnected()
+  const res = await fetch('http://localhost:3000/api/users')
+  const users = await res.json()
+
+  return {
+    props: { isConnected, users }
+  }
 }
